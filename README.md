@@ -18,6 +18,7 @@ mamba activate ./env
 
 # Install dependencies
 pip install -r requirements.txt
+pip install --ignore-installed fastmcp
 ```
 
 ## Local usage
@@ -36,6 +37,20 @@ python repo/ev_onehot/train.py example/  -s 1
 ```shell
 python repo/ev_onehot/pred.py example --seq_path example/data.csv
 ```
+## MCP usage
+### Install `ev+onehot` mcp
+```shell
+fastmcp install claude-code tool-mcps/ev_onehot_mcp/src/ev_onehot_mcp.py --python tool-mcps/ev_onehot_mcp/env/bin/python
+```
+
+## Call MCP
+
+```markdown
+I have created a plmc model for subtilisin BPN' in directory @examples/case2.1_subtilisin/plmc. Can you help build a ev+onehot model using ev_onehot_mcp and create it to @examples/case2.1_subtilisin/ directory. The wild-type sequence is @examples/case2.1_subtilisin/wt.fasta, and the dataset is @examples/case2.1_subtilisin/data.csv.
+
+Please convert the relative path to absolution path before calling the MCP servers.
+```
+
 ## API Reference
 
 ### ev_onehot_train_fitness_predictor
