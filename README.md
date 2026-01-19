@@ -11,6 +11,19 @@ This MCP server provides two main tools for protein fitness prediction:
 
 ## Installation
 
+### Quick Setup (Recommended)
+
+Run the automated setup script:
+
+```bash
+cd ev_onehot_mcp
+bash quick_setup.sh
+```
+
+The script will create the conda environment, install all dependencies, and display the Claude Code configuration. See `quick_setup.sh --help` for options like `--skip-env`.
+
+### Manual Installation (Alternative)
+
 ```bash
 # Create and activate virtual environment
 mamba env create -p ./env python=3.10 pip -y
