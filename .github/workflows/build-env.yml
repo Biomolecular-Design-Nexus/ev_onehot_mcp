@@ -41,7 +41,7 @@ jobs:
         shell: bash -el {0}
         run: |
           conda install -n base conda-pack -y
-          conda-pack -p ./env -o ev_onehot_mcp-env.tar.gz --ignore-editable-packages
+          $(conda info --base)/bin/conda-pack -p ./env -o ev_onehot_mcp-env.tar.gz --ignore-editable-packages
 
       - name: Determine release tag
         id: tag
