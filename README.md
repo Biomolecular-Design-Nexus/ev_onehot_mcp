@@ -1,217 +1,137 @@
 # EV+OneHot MCP Server
 
-Protein fitness prediction combining evolutionary coupling (EV) features and one-hot encoding with Ridge regression.
+**Fitness prediction combining evolutionary coupling and one-hot encoding via Docker**
 
-## Overview
+An MCP (Model Context Protocol) server for protein fitness prediction with 2 core tools:
+- Train a Ridge regression fitness model combining evolutionary (EV) features and one-hot encoding
+- Predict fitness for new protein sequences using a trained model
 
-This MCP server provides two main tools for protein fitness prediction:
+## Quick Start with Docker
 
-1. **ev_onehot_train_fitness_predictor**: Train a Ridge regression model on protein sequences
-2. **ev_onehot_predict_fitness**: Predict fitness for new protein sequences using a trained model
+### Approach 1: Pull Pre-built Image from GitHub
 
-## Installation
-
-### Quick Setup (Recommended)
-
-Run the automated setup script:
+The fastest way to get started. A pre-built Docker image is automatically published to GitHub Container Registry on every release.
 
 ```bash
+# Pull the latest image
+docker pull ghcr.io/macromnex/ev_onehot_mcp:latest
+
+# Register with Claude Code (runs as current user to avoid permission issues)
+claude mcp add ev_onehot -- docker run -i --rm --user `id -u`:`id -g` -v `pwd`:`pwd` ghcr.io/macromnex/ev_onehot_mcp:latest
+```
+
+**Note:** Run from your project directory. `` `pwd` `` expands to the current working directory.
+
+**Requirements:**
+- Docker
+- Claude Code installed
+
+That's it! The EV+OneHot MCP server is now available in Claude Code.
+
+---
+
+### Approach 2: Build Docker Image Locally
+
+Build the image yourself and install it into Claude Code. Useful for customization or offline environments.
+
+```bash
+# Clone the repository
+git clone https://github.com/MacromNex/ev_onehot_mcp.git
 cd ev_onehot_mcp
-bash quick_setup.sh
+
+# Build the Docker image
+docker build -t ev_onehot_mcp:latest .
+
+# Register with Claude Code (runs as current user to avoid permission issues)
+claude mcp add ev_onehot -- docker run -i --rm --user `id -u`:`id -g` -v `pwd`:`pwd` ev_onehot_mcp:latest
 ```
 
-The script will create the conda environment, install all dependencies, and display the Claude Code configuration. See `quick_setup.sh --help` for options like `--skip-env`.
+**Note:** Run from your project directory. `` `pwd` `` expands to the current working directory.
 
-### Manual Installation (Alternative)
+**Requirements:**
+- Docker
+- Claude Code installed
+- Git (to clone the repository)
+
+**About the Docker Flags:**
+- `-i` — Interactive mode for Claude Code
+- `--rm` — Automatically remove container after exit
+- `` --user `id -u`:`id -g` `` — Runs the container as your current user, so output files are owned by you (not root)
+- `-v` — Mounts your project directory so the container can access your data
+
+---
+
+## Verify Installation
+
+After adding the MCP server, you can verify it's working:
 
 ```bash
-# Create and activate virtual environment
-mamba env create -p ./env python=3.10 pip -y
-mamba activate ./env
+# List registered MCP servers
+claude mcp list
 
-# Install dependencies
-pip install -r requirements.txt
-pip install --ignore-installed fastmcp
+# You should see 'ev_onehot' in the output
 ```
 
-## Local usage
+In Claude Code, you can now use all 2 EV+OneHot tools:
+- `ev_onehot_train_fitness_predictor`
+- `ev_onehot_predict_fitness`
 
-### 1. Training a Model
-```shell
-# 5-fold cross validation
-python repo/ev_onehot/train.py example/ --cross_val
+---
 
-# Train test split training
-python repo/ev_onehot/train.py example/  -s 1
+## Next Steps
+
+- **Detailed documentation**: See [detail.md](detail.md) for comprehensive guides on:
+  - Available MCP tools and parameters
+  - Local Python environment setup (alternative to Docker)
+  - Data format requirements
+  - Example workflows and use cases
+  - Model architecture details
+
+---
+
+## Usage Examples
+
+Once registered, you can use the EV+OneHot tools directly in Claude Code. Here are some common workflows:
+
+### Example 1: Train a Fitness Model
+
+```
+I have a PLMC model in /path/to/plmc/ directory and training data at /path/to/data.csv with wild-type sequence /path/to/wt.fasta. Can you train an ev+onehot fitness model using ev_onehot_train_fitness_predictor with 5-fold cross-validation and save to /path/to/model/?
 ```
 
-### 2. Making Predictions
+### Example 2: Predict Fitness for New Sequences
 
-```shell
-python repo/ev_onehot/pred.py example --seq_path example/data.csv
 ```
-## MCP usage
-### Install `ev+onehot` mcp
-```shell
-fastmcp install claude-code tool-mcps/ev_onehot_mcp/src/server.py --python tool-mcps/ev_onehot_mcp/env/bin/python
+I have a trained ev+onehot model in /path/to/model/ and new sequences in /path/to/new_sequences.csv. Can you predict fitness for all sequences using ev_onehot_predict_fitness and save the predictions to /path/to/predictions/?
 ```
 
-## Call MCP
+### Example 3: Full Fitness Modeling Workflow
 
-```markdown
-I have created a plmc model for subtilisin BPN' in directory @examples/case2.1_subtilisin/plmc. Can you help build a ev+onehot model using ev_onehot_mcp and create it to @examples/case2.1_subtilisin/ directory. The wild-type sequence is @examples/case2.1_subtilisin/wt.fasta, and the dataset is @examples/case2.1_subtilisin/data.csv.
-
-Please convert the relative path to absolution path before calling the MCP servers.
+```
+I have experimental fitness data for subtilisin variants at /path/to/subtilisin/data.csv, wild-type at /path/to/subtilisin/wt.fasta, and a PLMC model at /path/to/subtilisin/plmc/. Please train an ev+onehot model with cross-validation and report the Spearman correlation performance.
 ```
 
-## API Reference
+---
 
-### ev_onehot_train_fitness_predictor
+## Troubleshooting
 
-Train a protein fitness prediction model.
-
-**Parameters:**
-- `data_dir` (str): Directory containing `data.csv` with training data
-- `train_data_path` (str, optional): Custom path to training CSV
-- `test_data_path` (str, optional): Path to external test set
-- `cross_val` (bool): Use 5-fold cross-validation (default: False)
-- `test_size` (float): Fraction for test split (default: 0.2)
-- `seed` (int): Random seed (default: 6)
-- `out_prefix` (str, optional): Output file prefix
-
-**Returns:**
-- `message`: Training summary with metrics
-- `artifacts`: List of generated files (model, predictions, summaries)
-
-**Example:**
-```python
-result = ev_onehot_train_fitness_predictor(
-    data_dir='example',
-    cross_val=True,  # 5-fold CV
-    seed=42
-)
-# Result: {
-#   'message': '5-fold CV completed: 0.440 ± 0.012',
-#   'artifacts': [...]
-# }
+**Docker not found?**
+```bash
+docker --version  # Install Docker if missing
 ```
 
-### ev_onehot_predict_fitness
-
-Predict fitness for protein sequences using a trained model.
-
-**Parameters:**
-- `model_dir` (str): Directory containing `ridge_model.joblib` and `plmc/`
-- `csv_file` (str, optional): CSV file with sequence column
-- `sequences` (list, optional): List of protein sequences (alternative to csv_file)
-- `seq_col` (str): Name of sequence column in CSV (default: 'seq')
-- `out_prefix` (str, optional): Output file prefix
-
-**Returns:**
-- `message`: Prediction summary (with metrics if log_fitness provided)
-- `artifacts`: List of generated prediction files
-
-**Examples:**
-```python
-# From CSV with default 'seq' column
-result = ev_onehot_predict_fitness(
-    model_dir='example',
-    csv_file='my_sequences.csv'
-)
-
-# From CSV with custom column name
-result = ev_onehot_predict_fitness(
-    model_dir='example',
-    csv_file='my_data.csv',
-    seq_col='protein_sequence'  # Use 'protein_sequence' instead of 'seq'
-)
-
-# From list
-result = ev_onehot_predict_fitness(
-    model_dir='example',
-    sequences=['MISLIAALAVDRVIGM...', 'MISLVAALAVDRVIGM...']
-)
+**Claude Code not found?**
+```bash
+# Install Claude Code
+npm install -g @anthropic-ai/claude-code
 ```
 
-## Data Format
+**PLMC model required?**
+- This tool requires a pre-trained PLMC model in the model directory
+- Use the `plmc_mcp` to generate PLMC models from MSA files
 
-### Training Data (data.csv)
-
-Required columns:
-- `seq`: Protein sequence (single-letter amino acid codes)
-- `log_fitness`: Log-transformed fitness values
-
-Optional columns:
-- Any additional metadata (will be preserved in outputs)
-
-Example:
-```csv
-seq,log_fitness
-MISLIAALAVDRVIGM...,0.128
-MISLVAALAVDRVIGM...,0.126
-```
-
-## Output Files
-
-### Training Outputs
-
-- `ridge_model.joblib`: Trained sklearn Ridge regression model
-- `*_test_results.csv`: Predictions on test set with true vs predicted fitness
-- `*_summary.csv`: Performance metrics summary
-- `*_fold{N}_results.csv`: Individual fold results (if cross_val=True)
-
-### Prediction Outputs
-
-- `predictions_*.csv`: Input sequences with predicted fitness values
-
-Example output:
-```csv
-seq,pred_fitness
-MISLIAALAVDRVIGM...,-0.892
-MISLVAALAVDRVIGM...,-0.898
-```
-
-## Technical Details
-
-### Model Architecture
-
-- **Feature Encoding**: Combined evolutionary (EV) features from PLMC model + one-hot encoding of amino acid sequences
-- **Algorithm**: Ridge regression with L2 regularization
-- **Hyperparameter Tuning**: 5-fold cross-validation over [0.1, 1, 10, 100, 1000]
-- **Performance**: Improved Spearman correlation using joint EV+OneHot predictor
-
-### Implementation Notes
-
-- Sequences with invalid amino acids are filtered out during training
-- Maximum sequence length: 2000 amino acids (configurable)
-- Valid amino acids: MRHKDESTNQCUGPAVIFYWLO
-- Model files are saved using joblib for efficient storage
-- All operations are logged using loguru for transparency and debugging
-
-## Requirements
-
-The implementation uses the combined EV+OneHot predictor, which requires:
-1. Multiple sequence alignment (MSA) in A2M format
-2. PLMC model trained on that MSA (located in `plmc/` directory)
-3. Wild-type sequence in FASTA format (`wt.fasta`)
-4. The PLMC model must be compatible with the wild-type sequence
-
-**Important:** The system will raise an error if the PLMC model is not compatible with the wild-type sequence. This validation ensures that evolutionary features are correctly aligned with the protein sequences in your dataset.
-
-## Citation
-
-This implementation is based on the work from:
-```
-@article{hsu2022,
-  title={Learning protein fitness models from evolutionary and assay-labeled data},
-  author={Hsu, Chloe and Nisonoff, Hunter and Fannjiang, Clara and Listgarten, Jennifer},
-  journal={Nature Biotechnology},
-  year={2022}
-}
-```
-
-Original repository: https://github.com/chloechsu/combining-evolutionary-and-assay-labelled-data
+---
 
 ## License
 
-This project follows the license of the original repository.
+Research use — see original repository for details
